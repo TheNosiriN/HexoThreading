@@ -1,17 +1,14 @@
+
+# Consider dependencies only in project.
+set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
+
 # The set of languages for which implicit dependencies are needed:
 set(CMAKE_DEPENDS_LANGUAGES
-  "CXX"
   )
-# The set of files for implicit dependencies of each language:
-set(CMAKE_DEPENDS_CHECK_CXX
-  "C:/Users/User1/Documents/C++ projects/Hexo Game Engine/HexoThreading/HexoThreading/main.cpp" "C:/Users/User1/Documents/C++ projects/Hexo Game Engine/HexoThreading/HexoThreading/CMakeFiles/app.dir/main.cpp.obj"
-  )
-set(CMAKE_CXX_COMPILER_ID "MSVC")
 
-# The include file search paths:
-set(CMAKE_CXX_TARGET_INCLUDE_PATH
-  "inc"
-  "Shared"
+# The set of dependency files which are needed:
+set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "C:/Users/TheNosiriN/Documents/C++ Projects/Hexo Game Engine/HexoThreading/main.cpp" "CMakeFiles/app.dir/main.cpp.obj" "msvc" "CMakeFiles/app.dir/main.cpp.obj.d"
   )
 
 # Targets to which this target links.
