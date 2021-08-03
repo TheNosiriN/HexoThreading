@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/User1/Documents/C++ projects/Hexo Game Engine/HexoThreading/HexoThreading/inc/HexoThreading.h
+iostream
+-
+vector
+-
+chrono
+-
+thread
+-
+mutex
+-
+condition_variable
+-
+cstring
+-
+
+C:/Users/User1/Documents/C++ projects/Hexo Game Engine/HexoThreading/HexoThreading/main.cpp
+inc/HexoThreading.h
+C:/Users/User1/Documents/C++ projects/Hexo Game Engine/HexoThreading/HexoThreading/inc/HexoThreading.h
+
