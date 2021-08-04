@@ -117,6 +117,9 @@ CMakeFiles\app.dir\main.cpp.obj: "C:\Program Files (x86)\Microsoft Visual Studio
 CMakeFiles\app.dir\main.cpp.obj: "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30037\include\condition_variable"
 CMakeFiles\app.dir\main.cpp.obj: Shared\HexoResourceList.h
 CMakeFiles\app.dir\main.cpp.obj: Shared\HXRC.h
+CMakeFiles\app.dir\main.cpp.obj: "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30037\include\functional"
+CMakeFiles\app.dir\main.cpp.obj: inc\Threading.h
+CMakeFiles\app.dir\main.cpp.obj: inc\ThreadingEngine.h
 
 
 
@@ -349,3 +352,9 @@ inc\HexoThreading.h:
 Shared\HexoResourceList.h:
 
 Shared\HXRC.h:
+
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30037\include\functional":
+
+inc\Threading.h:
+
+inc\ThreadingEngine.h:

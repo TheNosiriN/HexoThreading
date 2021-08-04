@@ -5,11 +5,6 @@
 #define HEXO_HXRC_H
 
 
-/////////////////////
-#include <functional>
-/////////////////////
-
-
 typedef uint8_t HXRC;
 
 
@@ -30,13 +25,13 @@ struct HXRC_STATE {
 
 
 struct HXRC_APP {
-	std::function<void(HXRC_STATE)> func;
+	void (*func)(HXRC_STATE);
 };
 
 
 struct HXRC_SYS {
 	std::vector<HXRC_APP> Apps;
-	inline size_t AddApp(std::function<void(HXRC_STATE)> func){
+	inline size_t AddApp(void (*func)(HXRC_STATE)){
 		Apps.push_back(HXRC_APP{func});
 		return Apps.size();
 	}
@@ -51,8 +46,8 @@ struct HXRC_SYS {
 };
 
 
-static inline size_t HXRC_REGISTER_APP(std::function<void(HXRC_STATE)> func){
-	return HXRC_SYS::Get()->AddApp(std::ref(func));
+static inline size_t HXRC_REGISTER_APP(void (*func)(HXRC_STATE)){
+	return HXRC_SYS::Get()->AddApp(func);
 }
 
 
