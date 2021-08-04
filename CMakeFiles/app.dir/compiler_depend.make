@@ -115,6 +115,7 @@ CMakeFiles\app.dir\main.cpp.obj: "C:\Program Files (x86)\Microsoft Visual Studio
 CMakeFiles\app.dir\main.cpp.obj: "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30037\include\tuple"
 CMakeFiles\app.dir\main.cpp.obj: "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30037\include\mutex"
 CMakeFiles\app.dir\main.cpp.obj: "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30037\include\condition_variable"
+CMakeFiles\app.dir\main.cpp.obj: "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30037\include\string"
 CMakeFiles\app.dir\main.cpp.obj: Shared\HexoResourceList.h
 CMakeFiles\app.dir\main.cpp.obj: Shared\HXRC.h
 CMakeFiles\app.dir\main.cpp.obj: "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30037\include\functional"
@@ -348,6 +349,8 @@ inc\HexoThreading.h:
 "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30037\include\tuple":
 
 "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30037\include\mutex":
+
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30037\include\string":
 
 Shared\HexoResourceList.h:
 

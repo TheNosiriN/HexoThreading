@@ -70,15 +70,27 @@ namespace Hexo {
 
 
 
-    struct HXThread_I {
-      std::thread sysThread;
-      HXSIZE ID = 0;
+    struct HXThreadCommunicator {
+      bool Terminated = false;
+      std::condition_variable cv;
+      std::mutex mtx;
     };
 
-    struct HXThreadEngineMinimal {
-      bool Terminated = false;
-      
+    struct HXThread_I {
+      HXThread_I(HXSIZE id){}
+      ~HXThread_I(){}
+
+      HXThread_I(HXThread_I&&) noexcept = default;
+
+      std::thread sysThread;
+      size_t ID = 0;
     };
+
+    struct HXWorkerThread_I : HXThread_I {
+      HXWorkerThread_I(HXSIZE id) : HXThread_I(id){}
+      HXThreadCommunicator tc;
+    };
+
 
 
 

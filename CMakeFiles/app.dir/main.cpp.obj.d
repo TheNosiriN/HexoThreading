@@ -111,6 +111,7 @@ C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.
 C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30037/include/tuple
 C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30037/include/mutex
 C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30037/include/condition_variable
+C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30037/include/string
 C:/Users/TheNosiriN/Documents/C++ Projects/Hexo Game Engine/HexoThreading/Shared/HexoResourceList.h
 C:/Users/TheNosiriN/Documents/C++ Projects/Hexo Game Engine/HexoThreading/Shared/HXRC.h
 C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30037/include/functional

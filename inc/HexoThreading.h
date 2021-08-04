@@ -21,7 +21,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <cstring>
+#include <string>
 
 
 ////// Shared ///////

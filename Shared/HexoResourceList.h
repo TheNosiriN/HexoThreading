@@ -7,6 +7,9 @@
 #define HEXO_RESOURCE_LIST_H
 
 
+#include <memory>
+
+
 namespace Hexo
 {
 
@@ -68,8 +71,8 @@ namespace Hexo
 		const HXSIZE Size() const { return length; }
 
 
-		ResourceNode<R>* Insert(R Data){
-			ResourceNode<R>* n = new ResourceNode<R>{Data};
+		ResourceNode<R>* Insert(R&& Data){
+			ResourceNode<R>* n = new ResourceNode<R>{std::move(Data)};
 			n->PreviousResource = LastNode;
 			if (LastNode){ LastNode->NextResource = n; }
 			LastNode = n;
