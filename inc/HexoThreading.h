@@ -23,6 +23,8 @@
 #include <condition_variable>
 #include <string>
 
+//////////////////////////////
+
 
 ////// Shared ///////
 typedef size_t HXSIZE; // I will provide the HexoDefs header some time later, it's not ready for sharing

@@ -76,6 +76,13 @@ namespace Hexo {
       std::mutex mtx;
     };
 
+    template<typename Func1, typename Func2>
+    struct HXWorkerTask {
+      void* Data;
+      Func1 WorkerFunction;
+      Func2 CallbackFunction;
+    };
+
     struct HXThread_I {
       HXThread_I(HXSIZE id){}
       ~HXThread_I(){}
@@ -89,6 +96,7 @@ namespace Hexo {
     struct HXWorkerThread_I : HXThread_I {
       HXWorkerThread_I(HXSIZE id) : HXThread_I(id){}
       HXThreadCommunicator tc;
+      void* task;
     };
 
 

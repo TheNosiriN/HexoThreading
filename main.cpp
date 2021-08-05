@@ -16,6 +16,7 @@ int main() {
 
 	/// testing error app lambdas
 	std::string s = "Errrssss";
+
 	Threading::SetErrorCallback([&](HXRC_STATE state){
 		std::cout << state.ErrorString << s << '\n';
 		if (state.Code == HXRC_FATAL)exit(0);
@@ -33,21 +34,35 @@ int main() {
 
 
 	/// testing immediate threads
-	int num = 1645;
-	void* message = reinterpret_cast<void*>(&num);
+	{
+		int num = 1645;
+		void* message = reinterpret_cast<void*>(&num);
 
-	HXThread t = hxt.spawnImmediateThread(message, sizeof(int),
-		[](void* data){
-			*(reinterpret_cast<int*>(data)) *= 10;
-		},
+		HXThread t = hxt.spawnImmediateThread(message, sizeof(int),
+			[](void* data){
+				*(reinterpret_cast<int*>(data)) *= 10;
+			},
 
-		[](void* data){
-			std::cout << *(reinterpret_cast<int*>(data)) << '\n';
-		}
-	);
+			[&](void* data){
+				num = *(reinterpret_cast<int*>(data));
+			}
+		);
 
-	hxt.JoinThread(t);
-	//
+		hxt.JoinThread(t);
+		std::cout << "Immediate thread: " << num << '\n';
+	};
+	////
+
+
+
+
+	/// testing worker threads (WIP)
+	{
+		int num = 1645;
+		void* message = reinterpret_cast<void*>(&num);
+		std::cout << "Worker thread: " << num << '\n';
+	};
+	/////
 
 
 
