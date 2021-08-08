@@ -22,6 +22,10 @@ namespace Hexo
 
 	};
 
+	template<typename R>
+	struct MinimalResourceNode {
+		R Data;
+	};
 
 
 

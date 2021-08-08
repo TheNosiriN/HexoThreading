@@ -1,5 +1,6 @@
 
 #define DEBUG
+#define HEXO_THREADING_TRACKTHREADS
 #include "inc/HexoThreading.h"
 
 
@@ -14,7 +15,7 @@ using namespace Hexo::Threading;
 
 int main() {
 	/// testing error app with lambdas
-	std::string s = "Threading Enging: ";
+	std::string s = "Threading Engine: ";
 
 	Threading::SetErrorCallback([&](HXRC_STATE state){
 		std::cout << s << state.ErrorString << '\n';
@@ -32,12 +33,13 @@ int main() {
 
 
 
+
 	/// testing immediate threads
 	{
 		int num = 1645;
 		void* message = reinterpret_cast<void*>(&num);
 
-		HXImmediateThread t = hxt.spawnImmediateThread(message, sizeof(int),
+		HXImmediateThread t = hxt.SpawnImmediateThread(message, sizeof(int),
 			[](void* data){
 				*(reinterpret_cast<int*>(data)) *= 10;
 			},
@@ -55,15 +57,17 @@ int main() {
 
 
 
+
+
 	/// testing worker threads
 	{
 		int num = 1645;
 		volatile bool done = false;
 		void* message = reinterpret_cast<void*>(&num);
 
-		HXWorkerThread t = hxt.spawnWorkerThread();
+		HXWorkerThread t = hxt.SpawnWorkerThread();
 
-		hxt.SubmitWorkerTask(t, message, sizeof(int),
+		hxt.SubmitTask(t, message, sizeof(int),
 			[](void* data){
 				*(reinterpret_cast<int*>(data)) *= 10;
 			},
@@ -81,6 +85,39 @@ int main() {
 
 	};
 	/////
+
+
+
+
+
+
+	/// testing dedicated threads
+	{
+		int num = 1645;
+		volatile bool done = false;
+		void* message = reinterpret_cast<void*>(&num);
+
+		HXDedicatedThread t = hxt.SpawnDedicatedThread(
+			[](void* data){
+				*(reinterpret_cast<int*>(data)) *= 10;
+			},
+
+			[&](void* data){
+				num = *(reinterpret_cast<int*>(data));
+				done = true;
+			}
+		);
+
+		hxt.SubmitTask(t, message, sizeof(int));
+
+		//wait for dedicated thread to callback
+		while (!done){}
+
+		std::cout << "Dedicated thread: " << num << '\n';
+
+	};
+	/////
+
 
 
 	// hxt.Release();

@@ -46,7 +46,7 @@ namespace Hexo {
 
 
   /// forgive me for this...
-  /// I'll implement this some time later
+  /// I'll implement it some time later
   template<typename T> using MinimalQueue = std::queue<T>;
   //////
 
@@ -89,11 +89,17 @@ namespace Hexo {
       std::function<void(void*)> CallbackFunction;
     };
 
+    struct THI_DedicatedTask {
+      void* Data;
+    };
+
+
 
     struct THI_Thread {
       THI_Thread(HXSIZE id){ this->ID = id; }
       ~THI_Thread(){
         // delete sysThread;
+        std::cout << "/* message */" << '\n';
       }
       // THI_Thread(THI_Thread&&) noexcept = default;
       inline void move_thread_constructor(THI_Thread& other){
@@ -113,21 +119,17 @@ namespace Hexo {
       size_t ID = 0;
     };
 
+
+
     struct THI_ImmediateThread : THI_Thread {
       THI_ImmediateThread(HXSIZE id) : THI_Thread(id){}
     };
 
     struct THI_WorkerThread : THI_Thread {
-      THI_WorkerThread(HXSIZE id) : THI_Thread(id){
-        // taskQueue = MinimalQueue<HXWorkerTask>();
-      }
+      THI_WorkerThread(HXSIZE id) : THI_Thread(id){}
       ~THI_WorkerThread(){ delete tc; }
 
       THI_WorkerThread(THI_WorkerThread&& other) : THI_Thread(other){
-        sysThread = std::move(other.sysThread);
-        ID = other.ID;
-        other.ID = 0;
-
         tc = other.tc;
         taskQueue = std::move(taskQueue);
         other.tc = nullptr;
@@ -137,7 +139,19 @@ namespace Hexo {
       MinimalQueue<THI_WorkerTask> taskQueue;
     };
 
+    struct THI_DedicatedThread : THI_Thread {
+      THI_DedicatedThread(HXSIZE id) : THI_Thread(id){}
+      ~THI_DedicatedThread(){ delete tc; }
 
+      THI_DedicatedThread(THI_DedicatedThread&& other) : THI_Thread(other){
+        tc = other.tc;
+        taskQueue = std::move(taskQueue);
+        other.tc = nullptr;
+      }
+
+      THI_ThreadCommunicator* tc = nullptr;
+      MinimalQueue<THI_DedicatedTask> taskQueue;
+    };
 
 
   };
