@@ -72,6 +72,10 @@ namespace Hexo
 
 
 		ResourceNode<R>* Insert(R&& Data){
+			return Insert(Data);
+		}
+
+		ResourceNode<R>* Insert(R& Data){
 			ResourceNode<R>* n = new ResourceNode<R>{std::move(Data)};
 			n->PreviousResource = LastNode;
 			if (LastNode){ LastNode->NextResource = n; }

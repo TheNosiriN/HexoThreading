@@ -45,6 +45,12 @@
 namespace Hexo {
 
 
+  /// forgive me for this...
+  /// I'll implement this some time later
+  template<typename T> using MinimalQueue = std::queue<T>;
+  //////
+
+
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,33 +76,65 @@ namespace Hexo {
 
 
 
-    struct HXThreadCommunicator {
+    struct THI_ThreadCommunicator {
       bool Terminated = false;
       std::condition_variable cv;
       std::mutex mtx;
     };
 
-    template<typename Func1, typename Func2>
-    struct HXWorkerTask {
+
+    struct THI_WorkerTask {
       void* Data;
-      Func1 WorkerFunction;
-      Func2 CallbackFunction;
+      std::function<void(void*)> WorkerFunction;
+      std::function<void(void*)> CallbackFunction;
     };
 
-    struct HXThread_I {
-      HXThread_I(HXSIZE id){}
-      ~HXThread_I(){}
 
-      HXThread_I(HXThread_I&&) noexcept = default;
+    struct THI_Thread {
+      THI_Thread(HXSIZE id){ this->ID = id; }
+      ~THI_Thread(){
+        // delete sysThread;
+      }
+      // THI_Thread(THI_Thread&&) noexcept = default;
+      inline void move_thread_constructor(THI_Thread& other){
+        sysThread = std::move(other.sysThread);
+        ID = other.ID;
+        other.ID = 0;
+      }
+
+      THI_Thread(THI_Thread& other){
+        move_thread_constructor(other);
+      }
+      THI_Thread(THI_Thread&& other){
+        move_thread_constructor(other);
+      }
 
       std::thread sysThread;
       size_t ID = 0;
     };
 
-    struct HXWorkerThread_I : HXThread_I {
-      HXWorkerThread_I(HXSIZE id) : HXThread_I(id){}
-      HXThreadCommunicator tc;
-      void* task;
+    struct THI_ImmediateThread : THI_Thread {
+      THI_ImmediateThread(HXSIZE id) : THI_Thread(id){}
+    };
+
+    struct THI_WorkerThread : THI_Thread {
+      THI_WorkerThread(HXSIZE id) : THI_Thread(id){
+        // taskQueue = MinimalQueue<HXWorkerTask>();
+      }
+      ~THI_WorkerThread(){ delete tc; }
+
+      THI_WorkerThread(THI_WorkerThread&& other) : THI_Thread(other){
+        sysThread = std::move(other.sysThread);
+        ID = other.ID;
+        other.ID = 0;
+
+        tc = other.tc;
+        taskQueue = std::move(taskQueue);
+        other.tc = nullptr;
+      }
+
+      THI_ThreadCommunicator* tc = nullptr;
+      MinimalQueue<THI_WorkerTask> taskQueue;
     };
 
 

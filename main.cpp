@@ -13,18 +13,17 @@ using namespace Hexo::Threading;
 
 
 int main() {
-
-	/// testing error app lambdas
-	std::string s = "Errrssss";
+	/// testing error app with lambdas
+	std::string s = "Threading Enging: ";
 
 	Threading::SetErrorCallback([&](HXRC_STATE state){
-		std::cout << state.ErrorString << s << '\n';
+		std::cout << s << state.ErrorString << '\n';
 		if (state.Code == HXRC_FATAL)exit(0);
 	});
 
 
 	/// testing the error app
-	HX_THREADING_ERROR_PRINT("Error App is working");
+	HX_THREADING_ERROR_PRINT("Error App");
 
 
 
@@ -38,7 +37,7 @@ int main() {
 		int num = 1645;
 		void* message = reinterpret_cast<void*>(&num);
 
-		HXThread t = hxt.spawnImmediateThread(message, sizeof(int),
+		HXImmediateThread t = hxt.spawnImmediateThread(message, sizeof(int),
 			[](void* data){
 				*(reinterpret_cast<int*>(data)) *= 10;
 			},
@@ -56,14 +55,35 @@ int main() {
 
 
 
-	/// testing worker threads (WIP)
+	/// testing worker threads
 	{
 		int num = 1645;
+		volatile bool done = false;
 		void* message = reinterpret_cast<void*>(&num);
+
+		HXWorkerThread t = hxt.spawnWorkerThread();
+
+		hxt.SubmitWorkerTask(t, message, sizeof(int),
+			[](void* data){
+				*(reinterpret_cast<int*>(data)) *= 10;
+			},
+
+			[&](void* data){
+				num = *(reinterpret_cast<int*>(data));
+				done = true;
+			}
+		);
+
+		//wait for worker thread to callback
+		while (!done){}
+
 		std::cout << "Worker thread: " << num << '\n';
+
 	};
 	/////
 
+
+	// hxt.Release();
 
 
 	return 0;
