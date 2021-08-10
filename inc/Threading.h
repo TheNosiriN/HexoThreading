@@ -96,12 +96,11 @@ namespace Hexo {
 
 
     struct THI_Thread {
-      THI_Thread(HXSIZE id){ this->ID = id; }
+      THI_Thread(size_t id){ this->ID = id; }
       ~THI_Thread(){
-        // delete sysThread;
-        std::cout << "/* message */" << '\n';
+        std::cout << "help!!: " << ID << '\n';
       }
-      // THI_Thread(THI_Thread&&) noexcept = default;
+
       inline void move_thread_constructor(THI_Thread& other){
         sysThread = std::move(other.sysThread);
         ID = other.ID;
@@ -121,12 +120,22 @@ namespace Hexo {
 
 
 
+
     struct THI_ImmediateThread : THI_Thread {
-      THI_ImmediateThread(HXSIZE id) : THI_Thread(id){}
+      THI_ImmediateThread(size_t id) : THI_Thread(id){}
+      ~THI_ImmediateThread(){
+
+        ///TODO: Find a better way to stop thread destuctor from being called
+        /// THIS IS A MEMORY LEAK!!!!!!
+        std::thread* temp = new std::thread();
+        *temp = std::move(sysThread);
+        ///////
+
+      }
     };
 
     struct THI_WorkerThread : THI_Thread {
-      THI_WorkerThread(HXSIZE id) : THI_Thread(id){}
+      THI_WorkerThread(size_t id) : THI_Thread(id){}
       ~THI_WorkerThread(){ delete tc; }
 
       THI_WorkerThread(THI_WorkerThread&& other) : THI_Thread(other){
@@ -140,7 +149,7 @@ namespace Hexo {
     };
 
     struct THI_DedicatedThread : THI_Thread {
-      THI_DedicatedThread(HXSIZE id) : THI_Thread(id){}
+      THI_DedicatedThread(size_t id) : THI_Thread(id){}
       ~THI_DedicatedThread(){ delete tc; }
 
       THI_DedicatedThread(THI_DedicatedThread&& other) : THI_Thread(other){
@@ -152,6 +161,75 @@ namespace Hexo {
       THI_ThreadCommunicator* tc = nullptr;
       MinimalQueue<THI_DedicatedTask> taskQueue;
     };
+
+
+
+
+
+    struct THI_WorkerThreadPool {
+      THI_WorkerThreadPool(size_t id, HXSIZE count){
+        this->ID = id;
+        this->Count = count;
+      }
+      ~THI_WorkerThreadPool(){
+        delete[] threads;
+        delete tc;
+      }
+
+      THI_WorkerThreadPool(THI_WorkerThreadPool&& other){
+        taskQueue = std::move(taskQueue);
+        threads = other.threads;
+        tc = other.tc;
+        ID = other.ID;
+
+        other.threads = nullptr;
+        other.tc = nullptr;
+        other.ID = 0;
+      }
+
+      std::thread* threads;
+      THI_ThreadCommunicator* tc = nullptr;
+      MinimalQueue<THI_WorkerTask> taskQueue;
+
+      HXSIZE Count = 0;
+      size_t ID = 0;
+    };
+
+
+
+
+
+
+
+    struct THI_DedicatedThreadPool {
+      THI_DedicatedThreadPool(size_t id, HXSIZE count){
+        this->ID = id;
+        this->Count = count;
+      }
+      ~THI_DedicatedThreadPool(){
+        delete[] threads;
+        delete tc;
+      }
+
+      THI_DedicatedThreadPool(THI_DedicatedThreadPool&& other){
+        taskQueue = std::move(taskQueue);
+        threads = other.threads;
+        tc = other.tc;
+        ID = other.ID;
+
+        other.threads = nullptr;
+        other.tc = nullptr;
+        other.ID = 0;
+      }
+
+      std::thread* threads;
+      THI_ThreadCommunicator* tc = nullptr;
+      MinimalQueue<THI_DedicatedTask> taskQueue;
+
+      HXSIZE Count = 0;
+      size_t ID = 0;
+    };
+
 
 
   };

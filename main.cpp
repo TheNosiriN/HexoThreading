@@ -1,6 +1,6 @@
 
 #define DEBUG
-#define HEXO_THREADING_TRACKTHREADS
+// #define HEXO_THREADING_UNTRACKEDTHREADS
 #include "inc/HexoThreading.h"
 
 
@@ -83,9 +83,10 @@ int main() {
 
 		std::cout << "Worker thread: " << num << '\n';
 
+		hxt.DestroyThread(t);
+
 	};
 	/////
-
 
 
 
@@ -114,6 +115,28 @@ int main() {
 		while (!done){}
 
 		std::cout << "Dedicated thread: " << num << '\n';
+
+		hxt.DestroyThread(t);
+
+	};
+	/////
+
+
+
+
+
+	/// testing worker threadpools
+	{
+		// HXWorkerThreadPool t = hxt.SpawnWorkerPool(10);
+	};
+	/////
+
+
+
+
+
+	/// testing dedicated threadpools
+	{
 
 	};
 	/////

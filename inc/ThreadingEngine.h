@@ -22,11 +22,11 @@ using namespace Threading;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<typename Func1, typename Func2, typename Func3>
-void HX_Threading_ImmediateThread(size_t id, THI_ThreadCommunicator* tc, void* data, Func1 function, Func2 callback, Func3 engineCallback){
+void HX_Threading_ImmediateThread(size_t id, void* data, Func1 function, Func2 callback, Func3 engineCallback){
   function(data);
   callback(data);
-  engineCallback(id);
   std::free(data);
+  engineCallback(id);
 }
 
 
@@ -35,19 +35,26 @@ void HX_Threading_WorkerThread(size_t id, THI_ThreadCommunicator* tc, MinimalQue
   std::unique_lock<std::mutex> lock(tc->mtx);
 
   while (true){
-    tc->cv.wait(lock, [&](){
+    tc->cv.wait(lock, [&queue, &tc](){
       return (!queue->empty() || tc->Terminated);
     });
     if (tc->Terminated)break;
 
     THI_WorkerTask task = queue->front();
+
+    lock.unlock();
+
     task.WorkerFunction(task.Data);
     task.CallbackFunction(task.Data);
     std::free(task.Data);
+
+    lock.lock();
     queue->pop();
 
-    // engineCallback(id);
   }
+
+  // lock.lock();
+  // engineCallback(id);
 }
 
 
@@ -59,18 +66,34 @@ void HX_Threading_DedicatedThread(
   std::unique_lock<std::mutex> lock(tc->mtx);
 
   while (true){
-    tc->cv.wait(lock, [&](){
+    tc->cv.wait(lock, [&queue, &tc](){
       return (!queue->empty() || tc->Terminated);
     });
     if (tc->Terminated)break;
 
     THI_DedicatedTask task = queue->front();
+
+    lock.unlock();
+
     function(task.Data);
     callback(task.Data);
     std::free(task.Data);
+
+    lock.lock();
     queue->pop();
   }
+
+  // lock.lock();
+  // engineCallback(id);
 }
+
+
+
+
+// template<typename Func1>
+// void HX_Threading_WorkerPoolThread(size_t id, THI_ThreadCommunicator* tc, MinimalQueue<THI_WorkerTask>* queue, Func1 engineCallback){
+//
+// }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -92,7 +115,7 @@ void HX_Threading_DedicatedThread(
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// define aliases
-#ifdef HEXO_THREADING_TRACKTHREADS
+#ifndef HEXO_THREADING_UNTRACKEDTHREADS
   typedef ResourceNode<THI_WorkerThread>* HXWorkerThread;
   typedef ResourceNode<THI_ImmediateThread>* HXImmediateThread;
   typedef ResourceNode<THI_DedicatedThread>* HXDedicatedThread;
@@ -101,6 +124,9 @@ void HX_Threading_DedicatedThread(
   typedef MinimalResourceNode<THI_ImmediateThread>* HXImmediateThread;
   typedef MinimalResourceNode<THI_DedicatedThread>* HXDedicatedThread;
 #endif
+
+typedef THI_WorkerThreadPool* HXWorkerThreadPool;
+typedef THI_DedicatedThreadPool* HXDedicatedThreadPool;
 
 
 
@@ -116,8 +142,11 @@ public:
 
   /// NOTE: All Engines must have a Release method for safe destruction
   void Release(){
+#ifndef HEXO_THREADING_UNTRACKEDTHREADS
     WorkerThreads.Release();
     ImmediateThreads.Release();
+    DedicatedThreads.Release();
+#endif
     delete GlobalCom;
   }
 
@@ -127,27 +156,28 @@ private:
 
 
 
-#ifdef HEXO_THREADING_TRACKTHREADS
+#ifndef HEXO_THREADING_UNTRACKEDTHREADS
   /// All threads and pools are tracked
   ResourceList<THI_WorkerThread> WorkerThreads;
   ResourceList<THI_ImmediateThread> ImmediateThreads;
   ResourceList<THI_DedicatedThread> DedicatedThreads;
 
+
   #define HX_THREADING_WORKER_LIST_INSERT(data) this->WorkerThreads.Insert(data)
   #define HX_THREADING_IMMEDIATE_LIST_INSERT(data) this->ImmediateThreads.Insert(data)
   #define HX_THREADING_DEDICATED_LIST_INSERT(data) this->DedicatedThreads.Insert(data)
 
-  #define HX_THREADING_WORKER_LIST_REMOVE(th) this->WorkerThreads.Remove(th)
-  #define HX_THREADING_IMMEDIATE_LIST_REMOVE(th) this->ImmediateThreads.Remove(th)
-  #define HX_THREADING_DEDICATED_LIST_REMOVE(th) this->DedicatedThreads.Remove(th)
+  #define HX_THREADING_WORKER_LIST_REMOVE(inVar) this->WorkerThreads.Remove(inVar)
+  #define HX_THREADING_IMMEDIATE_LIST_REMOVE(inVar) this->ImmediateThreads.Remove(inVar)
+  #define HX_THREADING_DEDICATED_LIST_REMOVE(inVar) this->DedicatedThreads.Remove(inVar)
 #else
-  #define HX_THREADING_WORKER_LIST_INSERT(data) new HXWorkerThread{data}
-  #define HX_THREADING_IMMEDIATE_LIST_INSERT(data) new HXImmediateThread{data}
-  #define HX_THREADING_DEDICATED_LIST_INSERT(data) new HXDedicatedThread{data}
+  #define HX_THREADING_WORKER_LIST_INSERT(data) new MinimalResourceNode<THI_WorkerThread>{data}
+  #define HX_THREADING_IMMEDIATE_LIST_INSERT(data) new MinimalResourceNode<THI_ImmediateThread>{data}
+  #define HX_THREADING_DEDICATED_LIST_INSERT(data) new MinimalResourceNode<THI_DedicatedThread>{data}
 
-  #define HX_THREADING_WORKER_LIST_REMOVE(th) delete th;
-  #define HX_THREADING_IMMEDIATE_LIST_REMOVE(th) delete th;
-  #define HX_THREADING_DEDICATED_LIST_REMOVE(th) delete th;
+  #define HX_THREADING_WORKER_LIST_REMOVE(inVar) delete inVar
+  #define HX_THREADING_IMMEDIATE_LIST_REMOVE(inVar) delete inVar
+  #define HX_THREADING_DEDICATED_LIST_REMOVE(inVar) delete inVar
 #endif
 
 
@@ -181,12 +211,13 @@ public:
 
     auto engineCallback = [this](size_t& id){
       HXImmediateThread nth = reinterpret_cast<HXImmediateThread>(id);
-      // this->Threads.Remove(nth);
+      std::lock_guard<std::mutex> lock(this->GlobalCom->mtx);
+      HX_THREADING_IMMEDIATE_LIST_REMOVE(nth);
     };
 
     th->Data.sysThread = std::thread(
       HX_Threading_ImmediateThread<Func1, Func2, decltype(engineCallback)>,
-      th->Data.ID, this->GlobalCom, newdata,
+      th->Data.ID, newdata,
       function, callback, engineCallback
     );
 
@@ -217,8 +248,11 @@ public:
     th->Data.tc = new THI_ThreadCommunicator();
 
     auto engineCallback = [this](size_t& id){
-      HXWorkerThread nth = reinterpret_cast<HXWorkerThread>(id);
-      // detachThread(nth);
+      // std::cout << "here1" << '\n';
+      // HXWorkerThread nth = reinterpret_cast<HXWorkerThread>(id);
+      // std::unique_lock<std::mutex> lock(this->GlobalCom->mtx);
+      // HX_THREADING_WORKER_LIST_REMOVE(nth);
+      // std::cout << "here2" << '\n';
     };
 
     th->Data.sysThread = std::thread(
@@ -279,8 +313,9 @@ public:
     th->Data.tc = new THI_ThreadCommunicator();
 
     auto engineCallback = [this](size_t& id){
-      HXDedicatedThread nth = reinterpret_cast<HXDedicatedThread>(id);
-      // this->Threads.Remove(nth);
+      // HXDedicatedThread nth = reinterpret_cast<HXDedicatedThread>(id);
+      // std::unique_lock<std::mutex> lock(this->GlobalCom->mtx);
+      // HX_THREADING_DEDICATED_LIST_REMOVE(nth);
     };
 
     th->Data.sysThread = std::thread(
@@ -315,33 +350,113 @@ public:
 
 
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////
+  ////// Worker Thread Pool Functions
+  //////
   /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  inline HXRC JoinThread(HXImmediateThread t){
-    HX_THREADING_WARNING_ASSERT(t->Data.sysThread.joinable(), std::string("Thread: "+std::to_string(t->Data.ID)+" Is not joinable").c_str());
-    t->Data.sysThread.join();
+  inline HXWorkerThreadPool SpawnWorkerPool(const HXSIZE Count){
+    HXWorkerThreadPool th = new THI_WorkerThreadPool(1, Count);
+    th->ID = reinterpret_cast<size_t>(th);
+
+    th->threads = new std::thread[Count];
+    th->tc = new THI_ThreadCommunicator();
+
+    auto engineCallback = [this](size_t& id){
+      std::thread* nth = reinterpret_cast<std::thread*>(id);
+      delete nth;
+    };
+
+    for (HXSIZE i=0; i<Count; ++i){
+      th->threads[i] = std::thread(HX_Threading_WorkerThread<decltype(engineCallback)>,
+        reinterpret_cast<size_t>(th->threads+i), th->tc, &th->taskQueue, engineCallback
+      );
+    }
+
+    return th;
+  }
+
+
+
+  template<typename Func1, typename Func2>
+  inline HXRC SubmitTask(HXWorkerThreadPool& th, void* data, size_t size, Func1&& function, Func2&& callback){
+    return SubmitTask(th, data, size, function, callback);
+  }
+
+  template<typename Func1, typename Func2>
+  inline HXRC SubmitTask(HXWorkerThreadPool& th, void* data, size_t size, Func1& function, Func2& callback){
+    void* newdata = std::malloc(size);
+    memcpy(newdata, data, size);
+
+    std::lock_guard<std::mutex> lock(th->tc.mtx);
+    th->taskQueue.push( THI_WorkerTask{newdata, std::function<void(void*)>(function), std::function<void(void*)>(callback)} );
+    th->tc.cv.notify_one();
+
+    return HXRC_OK;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  inline HXRC JoinThread(HXImmediateThread th){
+    HX_THREADING_WARNING_ASSERT(th->Data.sysThread.joinable(), std::string("Thread: "+std::to_string(th->Data.ID)+" Is not joinable").c_str());
+    th->Data.sysThread.join();
     return HXRC_OK;
   }
 
   inline HXRC DestroyThread(HXImmediateThread th){
+    th->Data.sysThread.join();
     HX_THREADING_IMMEDIATE_LIST_REMOVE(th);
     return HXRC_OK;
   }
 
   inline HXRC DestroyThread(HXWorkerThread th){
-    std::lock_guard<std::mutex> lock(th->Data.tc->mtx);
+    std::unique_lock<std::mutex> lock(th->Data.tc->mtx);
     th->Data.tc->Terminated = true;
     th->Data.tc->cv.notify_all();
+    lock.unlock();
+    th->Data.sysThread.join();
     HX_THREADING_WORKER_LIST_REMOVE(th);
-
     return HXRC_OK;
   }
 
   inline HXRC DestroyThread(HXDedicatedThread th){
-    std::lock_guard<std::mutex> lock(th->Data.tc->mtx);
+    std::unique_lock<std::mutex> lock(th->Data.tc->mtx);
     th->Data.tc->Terminated = true;
     th->Data.tc->cv.notify_all();
+    lock.unlock();
+    th->Data.sysThread.join();
     HX_THREADING_DEDICATED_LIST_REMOVE(th);
+    return HXRC_OK;
+  }
+
+
+  inline HXRC DestoryPool(HXWorkerThreadPool th){
+    std::lock_guard<std::mutex> lock(th->tc->mtx);
+    th->tc->Terminated = true;
+    th->tc->cv.notify_all();
+    delete th;
+    return HXRC_OK;
+  }
+
+  inline HXRC DestoryPool(HXDedicatedThreadPool th){
+    std::lock_guard<std::mutex> lock(th->tc->mtx);
+    th->tc->Terminated = true;
+    th->tc->cv.notify_all();
+    delete th;
+    return HXRC_OK;
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -20,6 +20,10 @@ namespace Hexo
 		ResourceNode<R>* PreviousResource = nullptr;
 		ResourceNode<R>* NextResource = nullptr;
 
+		~ResourceNode(){
+			if (this->PreviousResource){ this->PreviousResource->NextResource = this->NextResource; }
+			if (this->NextResource){ this->NextResource->PreviousResource = this->PreviousResource; }
+		}
 	};
 
 	template<typename R>
@@ -99,6 +103,9 @@ namespace Hexo
 
 			if (pointer == FirstNode){ FirstNode = pointer->NextResource; }
 			if (pointer == LastNode){ LastNode = pointer->PreviousResource; }
+
+			pointer->PreviousResource = nullptr;
+			pointer->NextResource = nullptr;
 
 			delete pointer;
 			pointer = nullptr;
