@@ -2,7 +2,7 @@
 Tiny Header-only Threading Library (Alpha). Made in C++14
 
 
-## Usage
+# Usage
 
 Every function is called by from the Threading Engine.
 
