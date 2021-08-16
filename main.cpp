@@ -8,7 +8,6 @@
 
 
 using namespace Hexo;
-using namespace Hexo::Threading;
 
 
 
@@ -182,6 +181,7 @@ int main() {
 		for (size_t i = 0; i < 10; i++) {
 			std::cout << "Dedicated pool: " << numarray[i] << '\n';
 		}
+		delete[] numarray;
 
 	};
 	/////
