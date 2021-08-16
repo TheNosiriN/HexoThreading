@@ -3,7 +3,7 @@
 ///if you enable this you will have to destroy all threads yourself
 #define HEXO_THREADING_UNTRACKEDTHREADS
 
-#include "inc/HexoThreading.h"
+#include "Release/HexoThreading.h"
 
 
 
