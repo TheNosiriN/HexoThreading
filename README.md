@@ -37,7 +37,7 @@ std::cout << "Immediate thread: " << num << '\n';
 
 
 ****
-- **Worker Threads**: They are threads live until explicitly destroyed. They take in data and function to run at every task you submit. They cannot be joined but they can be waited on by measuring it's taskQueue size.
+- **Worker Threads**: They are threads live until explicitly destroyed. They take in data and function to run at every task you submit. They cannot be joined but they can be waited on by watching it's taskQueue size.
 
 ```c++
 HXWorkerThread t = hxt.SpawnWorkerThread();
@@ -65,7 +65,7 @@ hxt.DestroyThread(t);
 
 
 ****
-- **Dedicated Threads**: They are threads that live on until explicitly destroyed. They run on just one function which is specified at construction. They take in only data at every task you submit. They cannot be joined but they can be waited on by measuring it's taskQueue size.
+- **Dedicated Threads**: They are threads that live on until explicitly destroyed. They run on just one function which is specified at construction. They take in only data at every task you submit. They cannot be joined but they can be waited on by watching it's taskQueue size.
 
 ```c++
 HXDedicatedThread t = hxt.SpawnDedicatedThread(
@@ -92,7 +92,7 @@ hxt.DestroyThread(t);
 
 
 ****
-- **Worker Thread Pools**: They are a pool of Worker Threads. They are given their number of threads at construction and take in the same parameters at Worker Threads at every task. They cannot be joined but they can be waited on by measuring it's taskQueue size.
+- **Worker Thread Pools**: They are a pool of Worker Threads. They are given their number of threads at construction and take in the same parameters at Worker Threads at every task. They cannot be joined but they can be waited on by watching it's taskQueue size.
 
 ```c++
 HXWorkerThreadPool t = hxt.SpawnWorkerPool(4);
@@ -126,7 +126,7 @@ delete[] numarray;
 
 
 ****
-- **Dedicated Thread Pools**: They are a pool of Dedicated Threads. They are given their number of threads at construction and take in the same parameters at Dedicated Threads at every task. They cannot be joined but they can be waited on by measuring it's taskQueue size.
+- **Dedicated Thread Pools**: They are a pool of Dedicated Threads. They are given their number of threads at construction and take in the same parameters at Dedicated Threads at every task. They cannot be joined but they can be waited on by watching it's taskQueue size.
 
 ```c++
 HXDedicatedThreadPool t = hxt.SpawnDedicatedPool(4,
