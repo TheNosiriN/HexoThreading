@@ -1,4 +1,4 @@
-C:/Users/TheNosiriN/Documents/C++ Projects/Hexo Game Engine/HexoThreading/inc/HexoThreading.h
+C:/Users/TheNosiriN/Documents/CppProjects/Hexo Game Engine/HexoThreading/inc/HexoThreading.h
 C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30037/include/iostream
 C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30037/include/yvals_core.h
 C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30037/include/vcruntime.h
@@ -116,7 +116,7 @@ C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.
 C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30037/include/queue
 C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30037/include/algorithm
 C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30037/include/deque
-C:/Users/TheNosiriN/Documents/C++ Projects/Hexo Game Engine/HexoThreading/Shared/HexoResourceList.h
-C:/Users/TheNosiriN/Documents/C++ Projects/Hexo Game Engine/HexoThreading/Shared/HXRC.h
-C:/Users/TheNosiriN/Documents/C++ Projects/Hexo Game Engine/HexoThreading/inc/Threading.h
-C:/Users/TheNosiriN/Documents/C++ Projects/Hexo Game Engine/HexoThreading/inc/ThreadingEngine.h
+C:/Users/TheNosiriN/Documents/CppProjects/Hexo Game Engine/HexoThreading/Shared/HexoResourceList.h
+C:/Users/TheNosiriN/Documents/CppProjects/Hexo Game Engine/HexoThreading/Shared/HXRC.h
+C:/Users/TheNosiriN/Documents/CppProjects/Hexo Game Engine/HexoThreading/inc/Threading.h
+C:/Users/TheNosiriN/Documents/CppProjects/Hexo Game Engine/HexoThreading/inc/ThreadingEngine.h

@@ -1,6 +1,8 @@
 
 #define DEBUG
+///if you enable this you will have to destroy all threads and pools yourself
 // #define HEXO_THREADING_UNTRACKEDTHREADS
+
 #include "inc/HexoThreading.h"
 
 
@@ -24,7 +26,7 @@ int main() {
 
 
 	/// testing the error app
-	HX_THREADING_ERROR_PRINT("Error App");
+	HX_THREADING_ERROR_PRINT("Error App is Working");
 
 
 
@@ -34,18 +36,14 @@ int main() {
 
 
 
+
 	/// testing immediate threads
 	{
-		int num = 1645;
-		void* message = reinterpret_cast<void*>(&num);
+		int num =1645;
 
-		HXImmediateThread t = hxt.SpawnImmediateThread(message, sizeof(int),
+		HXImmediateThread t = hxt.SpawnImmediateThread(num,
 			[](void* data){
 				*(reinterpret_cast<int*>(data)) *= 10;
-			},
-
-			[&](void* data){
-				num = *(reinterpret_cast<int*>(data));
 			}
 		);
 
@@ -61,27 +59,26 @@ int main() {
 
 	/// testing worker threads
 	{
-		int num = 1645;
-		volatile bool done = false;
-		void* message = reinterpret_cast<void*>(&num);
-
 		HXWorkerThread t = hxt.SpawnWorkerThread();
 
-		hxt.SubmitTask(t, message, sizeof(int),
-			[](void* data){
-				*(reinterpret_cast<int*>(data)) *= 10;
-			},
+		for (int i=0; i<10; i++){
+			int num = 1645 + i;
+			// void* message = reinterpret_cast<void*>(&num);
 
-			[&](void* data){
-				num = *(reinterpret_cast<int*>(data));
-				done = true;
-			}
-		);
+			hxt.SubmitTask(t, num,
+				[](void* data){
+					int num = *(reinterpret_cast<int*>(data)) * 10;
+					std::cout << "Worker thread: " << num << '\n';
+				}
+			);
+		}
 
 		//wait for worker thread to callback
-		while (!done){}
+		while (true){
+			volatile size_t s = hxt.GetQueueSize(t);
+			if (!s)break;
+		}
 
-		std::cout << "Worker thread: " << num << '\n';
 
 		hxt.DestroyThread(t);
 
@@ -94,27 +91,24 @@ int main() {
 
 	/// testing dedicated threads
 	{
-		int num = 1645;
-		volatile bool done = false;
-		void* message = reinterpret_cast<void*>(&num);
-
 		HXDedicatedThread t = hxt.SpawnDedicatedThread(
 			[](void* data){
-				*(reinterpret_cast<int*>(data)) *= 10;
-			},
-
-			[&](void* data){
-				num = *(reinterpret_cast<int*>(data));
-				done = true;
+				int num = *(reinterpret_cast<int*>(data)) * 10;
+				std::cout << "Dedicated thread: " << num << '\n';
 			}
 		);
 
-		hxt.SubmitTask(t, message, sizeof(int));
+		for (int i=0; i<10; i++){
+			int num = 1645 + i;
+			hxt.SubmitTask(t, num);
+		}
 
 		//wait for dedicated thread to callback
-		while (!done){}
+		while (true){
+			volatile size_t s = hxt.GetQueueSize(t);
+			if (!s)break;
+		}
 
-		std::cout << "Dedicated thread: " << num << '\n';
 
 		hxt.DestroyThread(t);
 
@@ -127,7 +121,31 @@ int main() {
 
 	/// testing worker threadpools
 	{
-		// HXWorkerThreadPool t = hxt.SpawnWorkerPool(10);
+		HXWorkerThreadPool t = hxt.SpawnWorkerPool(4);
+
+		int* numarray = new int[10];
+
+		for (int i=0; i<10; i++){
+			numarray[i] = 1645 + i;
+
+			hxt.SubmitTask(t, i,
+				[&numarray](void* data){
+					int i = *(reinterpret_cast<int*>(data));
+					numarray[i] *= 10;
+				}
+			);
+		}
+
+		//wait for worker thread pool to callback
+		while (true){
+			volatile size_t s = hxt.GetQueueSize(t);
+			if (!s)break;
+		}
+
+		for (size_t i = 0; i < 10; i++) {
+			std::cout << "Worker pool: " << numarray[i] << '\n';
+		}
+
 	};
 	/////
 
@@ -143,7 +161,10 @@ int main() {
 
 
 
-	// hxt.Release();
+
+
+	/// testing engine destruction
+	hxt.Release();
 
 
 	return 0;

@@ -45,7 +45,6 @@
 namespace Hexo {
 
 
-  /// forgive me for this...
   /// I'll implement it some time later
   template<typename T> using MinimalQueue = std::queue<T>;
   //////
@@ -83,10 +82,14 @@ namespace Hexo {
     };
 
 
-    struct THI_WorkerTask {
+    struct THI_WorkerTask_I {
+      virtual ~THI_WorkerTask_I() = 0;
+    };
+
+
+    struct THI_WorkerTask{
       void* Data;
       std::function<void(void*)> WorkerFunction;
-      std::function<void(void*)> CallbackFunction;
     };
 
     struct THI_DedicatedTask {
@@ -95,10 +98,11 @@ namespace Hexo {
 
 
 
+
     struct THI_Thread {
       THI_Thread(size_t id){ this->ID = id; }
       ~THI_Thread(){
-        std::cout << "help!!: " << ID << '\n';
+        // std::cout << "help!!: " << ID << '\n';
       }
 
       inline void move_thread_constructor(THI_Thread& other){
@@ -134,6 +138,7 @@ namespace Hexo {
       }
     };
 
+
     struct THI_WorkerThread : THI_Thread {
       THI_WorkerThread(size_t id) : THI_Thread(id){}
       ~THI_WorkerThread(){ delete tc; }
@@ -148,6 +153,7 @@ namespace Hexo {
       MinimalQueue<THI_WorkerTask> taskQueue;
     };
 
+
     struct THI_DedicatedThread : THI_Thread {
       THI_DedicatedThread(size_t id) : THI_Thread(id){}
       ~THI_DedicatedThread(){ delete tc; }
@@ -161,6 +167,7 @@ namespace Hexo {
       THI_ThreadCommunicator* tc = nullptr;
       MinimalQueue<THI_DedicatedTask> taskQueue;
     };
+
 
 
 

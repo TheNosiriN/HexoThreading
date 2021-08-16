@@ -21,10 +21,9 @@ using namespace Threading;
 //////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-template<typename Func1, typename Func2, typename Func3>
-void HX_Threading_ImmediateThread(size_t id, void* data, Func1 function, Func2 callback, Func3 engineCallback){
+template<typename Func1, typename Func2>
+void HX_Threading_ImmediateThread(size_t id, void* data, Func1 function, Func2 engineCallback){
   function(data);
-  callback(data);
   std::free(data);
   engineCallback(id);
 }
@@ -32,6 +31,7 @@ void HX_Threading_ImmediateThread(size_t id, void* data, Func1 function, Func2 c
 
 template<typename Func1>
 void HX_Threading_WorkerThread(size_t id, THI_ThreadCommunicator* tc, MinimalQueue<THI_WorkerTask>* queue, Func1 engineCallback){
+
   std::unique_lock<std::mutex> lock(tc->mtx);
 
   while (true){
@@ -40,28 +40,23 @@ void HX_Threading_WorkerThread(size_t id, THI_ThreadCommunicator* tc, MinimalQue
     });
     if (tc->Terminated)break;
 
-    THI_WorkerTask task = queue->front();
+    THI_WorkerTask task = std::move(queue->front());
 
     lock.unlock();
-
     task.WorkerFunction(task.Data);
-    task.CallbackFunction(task.Data);
     std::free(task.Data);
 
     lock.lock();
     queue->pop();
-
   }
 
-  // lock.lock();
-  // engineCallback(id);
 }
 
 
-template<typename Func1, typename Func2, typename Func3>
+template<typename Func1, typename Func2>
 void HX_Threading_DedicatedThread(
   size_t id, THI_ThreadCommunicator* tc, MinimalQueue<THI_DedicatedTask>* queue,
-  Func1 function, Func2 callback, Func3 engineCallback
+  Func1 function, Func2 engineCallback
 ){
   std::unique_lock<std::mutex> lock(tc->mtx);
 
@@ -71,20 +66,16 @@ void HX_Threading_DedicatedThread(
     });
     if (tc->Terminated)break;
 
-    THI_DedicatedTask task = queue->front();
+    THI_DedicatedTask task = std::move(queue->front());
 
     lock.unlock();
-
     function(task.Data);
-    callback(task.Data);
     std::free(task.Data);
 
     lock.lock();
     queue->pop();
-  }
 
-  // lock.lock();
-  // engineCallback(id);
+  }
 }
 
 
@@ -142,12 +133,14 @@ public:
 
   /// NOTE: All Engines must have a Release method for safe destruction
   void Release(){
+    // std::cout << "Releasing" << '\n';
 #ifndef HEXO_THREADING_UNTRACKEDTHREADS
     WorkerThreads.Release();
     ImmediateThreads.Release();
     DedicatedThreads.Release();
 #endif
     delete GlobalCom;
+    GlobalCom = nullptr;
   }
 
 
@@ -157,7 +150,7 @@ private:
 
 
 #ifndef HEXO_THREADING_UNTRACKEDTHREADS
-  /// All threads and pools are tracked
+  /// All threads are tracked
   ResourceList<THI_WorkerThread> WorkerThreads;
   ResourceList<THI_ImmediateThread> ImmediateThreads;
   ResourceList<THI_DedicatedThread> DedicatedThreads;
@@ -193,21 +186,22 @@ public:
   //////
   /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  template<typename Func1, typename Func2>
-  inline HXImmediateThread SpawnImmediateThread(void* data, size_t size, Func1&& function, Func2&& callback){
-    return SpawnImmediateThread(data, size, function, callback);
+  template<typename T, typename Func1>
+  inline HXImmediateThread SpawnImmediateThread(T& data, Func1&& function){
+    return SpawnImmediateThread(data, function);
   }
 
-  template<typename Func1, typename Func2>
-  inline HXImmediateThread SpawnImmediateThread(void* data, size_t size, Func1& function, Func2& callback){
+  template<typename T, typename Func1>
+  inline HXImmediateThread SpawnImmediateThread(T& data, Func1& function){
     HXImmediateThread th = HX_THREADING_IMMEDIATE_LIST_INSERT( THI_ImmediateThread(1) );
 
     /// the ID is the memory address
     th->Data.ID = reinterpret_cast<size_t>(th);
 
     /// copy data
+    size_t size = sizeof(data);
     void* newdata = std::malloc(size);
-    memcpy(newdata, data, size);
+    memcpy(newdata, reinterpret_cast<void*>(&data), size);
 
     auto engineCallback = [this](size_t& id){
       HXImmediateThread nth = reinterpret_cast<HXImmediateThread>(id);
@@ -216,9 +210,8 @@ public:
     };
 
     th->Data.sysThread = std::thread(
-      HX_Threading_ImmediateThread<Func1, Func2, decltype(engineCallback)>,
-      th->Data.ID, newdata,
-      function, callback, engineCallback
+      HX_Threading_ImmediateThread<Func1, decltype(engineCallback)>,
+      th->Data.ID, newdata, function, engineCallback
     );
 
     return th;
@@ -263,21 +256,22 @@ public:
   }
 
 
-  template<typename Func1, typename Func2>
-  inline HXRC SubmitTask(HXWorkerThread& th, void* data, size_t size, Func1&& function, Func2&& callback){
-    return SubmitTask(th, data, size, function, callback);
+  template<typename T, typename Func1>
+  inline HXRC SubmitTask(HXWorkerThread& th, T& data, Func1&& function){
+    return SubmitTask(th, data, function);
   }
 
-  template<typename Func1, typename Func2>
-  inline HXRC SubmitTask(HXWorkerThread& th, void* data, size_t size, Func1& function, Func2& callback){
+  template<typename T, typename Func1>
+  inline HXRC SubmitTask(HXWorkerThread& th, T& data, Func1& function){
     /// copy data
+    size_t size = sizeof(data);
     void* newdata = std::malloc(size);
-    memcpy(newdata, data, size);
+    memcpy(newdata, reinterpret_cast<void*>(&data), size);
 
     /// I REALLY didn't want to use std::function because of it's size but theres no helping it
     /// Theres no other way to store lambdas :(
     std::lock_guard<std::mutex> lock(th->Data.tc->mtx);
-    th->Data.taskQueue.push( THI_WorkerTask{newdata, std::function<void(void*)>(function), std::function<void(void*)>(callback)} );
+    th->Data.taskQueue.push( THI_WorkerTask{newdata, std::function<void(void*)>(function)} );
     th->Data.tc->cv.notify_all();
 
     return HXRC_OK;
@@ -300,13 +294,13 @@ public:
   //////
   /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  template<typename Func1, typename Func2>
-  inline HXDedicatedThread SpawnDedicatedThread(Func1&& function, Func2&& callback){
-    return SpawnDedicatedThread(function, callback);
+  template<typename Func1>
+  inline HXDedicatedThread SpawnDedicatedThread(Func1&& function){
+    return SpawnDedicatedThread(function);
   }
 
-  template<typename Func1, typename Func2>
-  inline HXDedicatedThread SpawnDedicatedThread(Func1& function, Func2& callback){
+  template<typename Func1>
+  inline HXDedicatedThread SpawnDedicatedThread(Func1& function){
     HXDedicatedThread th = HX_THREADING_DEDICATED_LIST_INSERT( THI_DedicatedThread(1) );
 
     th->Data.ID = reinterpret_cast<size_t>(th);
@@ -319,18 +313,20 @@ public:
     };
 
     th->Data.sysThread = std::thread(
-      HX_Threading_DedicatedThread<Func1, Func2, decltype(engineCallback)>,
-      th->Data.ID, th->Data.tc, &th->Data.taskQueue, function, callback, engineCallback
+      HX_Threading_DedicatedThread<Func1, decltype(engineCallback)>,
+      th->Data.ID, th->Data.tc, &th->Data.taskQueue, function, engineCallback
     );
 
     return th;
   }
 
 
-  inline HXRC SubmitTask(HXDedicatedThread& th, void* data, size_t size){
+  template<typename T>
+  inline HXRC SubmitTask(HXDedicatedThread& th, T& data){
     /// copy data
+    size_t size = sizeof(data);
     void* newdata = std::malloc(size);
-    memcpy(newdata, data, size);
+    memcpy(newdata, reinterpret_cast<void*>(&data), size);
 
     std::lock_guard<std::mutex> lock(th->Data.tc->mtx);
     th->Data.taskQueue.push( THI_DedicatedTask{newdata} );
@@ -380,19 +376,21 @@ public:
 
 
 
-  template<typename Func1, typename Func2>
-  inline HXRC SubmitTask(HXWorkerThreadPool& th, void* data, size_t size, Func1&& function, Func2&& callback){
-    return SubmitTask(th, data, size, function, callback);
+  template<typename T, typename Func1>
+  inline HXRC SubmitTask(HXWorkerThreadPool& th, T& data, Func1&& function){
+    return SubmitTask(th, data, function);
   }
 
-  template<typename Func1, typename Func2>
-  inline HXRC SubmitTask(HXWorkerThreadPool& th, void* data, size_t size, Func1& function, Func2& callback){
+  template<typename T, typename Func1>
+  inline HXRC SubmitTask(HXWorkerThreadPool& th, T& data, Func1& function){
+    /// copy data
+    size_t size = sizeof(data);
     void* newdata = std::malloc(size);
-    memcpy(newdata, data, size);
+    memcpy(newdata, reinterpret_cast<void*>(&data), size);
 
-    std::lock_guard<std::mutex> lock(th->tc.mtx);
-    th->taskQueue.push( THI_WorkerTask{newdata, std::function<void(void*)>(function), std::function<void(void*)>(callback)} );
-    th->tc.cv.notify_one();
+    std::lock_guard<std::mutex> lock(th->tc->mtx);
+    th->taskQueue.push( THI_WorkerTask{newdata, std::function<void(void*)>(function)} );
+    th->tc->cv.notify_one();
 
     return HXRC_OK;
   }
@@ -457,6 +455,22 @@ public:
     th->tc->cv.notify_all();
     delete th;
     return HXRC_OK;
+  }
+
+
+
+
+  inline volatile size_t GetQueueSize(const HXWorkerThread th) const {
+    return th->Data.taskQueue.size();
+  }
+  inline volatile size_t GetQueueSize(const HXDedicatedThread th) const {
+    return th->Data.taskQueue.size();
+  }
+  inline volatile size_t GetQueueSize(const HXWorkerThreadPool th) const {
+    return th->taskQueue.size();
+  }
+  inline volatile size_t GetQueueSize(const HXDedicatedThreadPool th) const {
+    return th->taskQueue.size();
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////

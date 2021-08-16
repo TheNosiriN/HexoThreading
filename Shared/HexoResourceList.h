@@ -69,6 +69,9 @@ namespace Hexo
 	template<typename R>
 	struct ResourceList
 	{
+		ResourceList(){}
+		~ResourceList(){ Release(); }
+
 		ResourceNode<R>* FirstNode = nullptr;
 		ResourceNode<R>* LastNode = nullptr;
 		HXSIZE length = 0;
@@ -119,6 +122,10 @@ namespace Hexo
 				delete p;
 				p = n;
 			}
+
+			this->FirstNode = nullptr;
+			this->LastNode = nullptr;
+			this->length = 0;
 		}
 
 	};

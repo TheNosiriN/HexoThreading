@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "C:/Users/TheNosiriN/Documents/C++ Projects/Hexo Game Engine/HexoThreading/main.cpp" "CMakeFiles/app.dir/main.cpp.obj" "msvc" "CMakeFiles/app.dir/main.cpp.obj.d"
+  "C:/Users/TheNosiriN/Documents/CppProjects/Hexo Game Engine/HexoThreading/main.cpp" "CMakeFiles/app.dir/main.cpp.obj" "msvc" "CMakeFiles/app.dir/main.cpp.obj.d"
   )
 
 # Targets to which this target links.
