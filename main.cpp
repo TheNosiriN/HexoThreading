@@ -39,11 +39,11 @@ int main() {
 
 	/// testing immediate threads
 	{
-		int num =1645;
+		int num = 1645;
 
 		HXImmediateThread t = hxt.SpawnImmediateThread(num,
-			[](void* data){
-				*(reinterpret_cast<int*>(data)) *= 10;
+			[&num](void* data){
+				num *= 10;
 			}
 		);
 
@@ -63,7 +63,6 @@ int main() {
 
 		for (int i=0; i<10; i++){
 			int num = 1645 + i;
-			// void* message = reinterpret_cast<void*>(&num);
 
 			hxt.SubmitTask(t, num,
 				[](void* data){
@@ -142,9 +141,12 @@ int main() {
 			if (!s)break;
 		}
 
+		hxt.DestroyPool(t);
+
 		for (size_t i = 0; i < 10; i++) {
 			std::cout << "Worker pool: " << numarray[i] << '\n';
 		}
+		delete[] numarray;
 
 	};
 	/////
@@ -155,6 +157,31 @@ int main() {
 
 	/// testing dedicated threadpools
 	{
+		HXDedicatedThreadPool t = hxt.SpawnDedicatedPool(4,
+			[](void* data){
+				**(reinterpret_cast<int**>(data)) *= 10;
+			}
+		);
+
+		int* numarray = new int[10];
+
+		for (int i=0; i<10; i++){
+			numarray[i] = 1645 + i;
+			int* ptr = numarray+i;
+			hxt.SubmitTask(t, ptr);
+		}
+
+		//wait for dedicated thread pool to callback
+		while (true){
+			volatile size_t s = hxt.GetQueueSize(t);
+			if (!s)break;
+		}
+
+		hxt.DestroyPool(t);
+
+		for (size_t i = 0; i < 10; i++) {
+			std::cout << "Dedicated pool: " << numarray[i] << '\n';
+		}
 
 	};
 	/////
